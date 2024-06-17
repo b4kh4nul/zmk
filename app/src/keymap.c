@@ -231,29 +231,34 @@ int zmk_keymap_apply_position_state(uint8_t source, int layer, uint32_t position
     return -ENOTSUP;
 }
 
+// trans 누르면 레이어1로 돌아가기
 int zmk_keymap_position_state_changed(uint8_t source, uint32_t position, bool pressed,
-                                      int64_t timestamp) {
-    if (pressed) {
-        zmk_keymap_active_behavior_layer[position] = _zmk_keymap_layer_state;
-    }
-    for (int layer = ZMK_KEYMAP_LAYERS_LEN - 1; layer >= _zmk_keymap_layer_default; layer--) {
-        if (zmk_keymap_layer_active_with_state(layer, zmk_keymap_active_behavior_layer[position])) {
-            int ret = zmk_keymap_apply_position_state(source, layer, position, pressed, timestamp);
-            if (ret > 0) {
-                LOG_DBG("behavior processing to continue to next layer");
-                continue;
-            } else if (ret < 0) {
-                LOG_DBG("Behavior returned error: %d", ret);
-                return ret;
-            } else {
-                return ret;
-            }
-        }
-    }
-
-    return -ENOTSUP;
+int64_t timestamp) {
+if (pressed) {
+zmk_keymap_active_behavior_layer[position] = _zmk_keymap_layer_state;
+}
+for (int layer = ZMK_KEYMAP_LAYERS_LEN - 1; layer >= _zmk_keymap_layer_default; layer--) {
+if (zmk_keymap_layer_active_with_state(layer, zmk_keymap_active_behavior_layer[position])) {
+int ret = zmk_keymap_apply_position_state(source, layer, position, pressed, timestamp);
+if (ret > 0) {
+if(layer == ZMK_KEYMAP_LAYERS_LEN - 1 || layer == ZMK_KEYMAP_LAYERS_LEN - 2)
+{
+zmk_keymap_layer_deactivate(layer);
+LOG_DBG("behavior processing deactive layer : %d ret : %d",layer, ret);
+}
+LOG_DBG("behavior processing to continue to next layer");
+continue;
+} else if (ret < 0) {
+LOG_DBG("Behavior returned error: %d", ret);
+return ret;
+} else {
+return ret;
+}
+}
 }
 
+return -ENOTSUP;
+}
 #if ZMK_KEYMAP_HAS_SENSORS
 int zmk_keymap_sensor_event(uint8_t sensor_index,
                             const struct zmk_sensor_channel_data *channel_data,
